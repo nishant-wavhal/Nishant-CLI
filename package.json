@@ -2,22 +2,26 @@
   "name": "nishant-cli",
   "bin": {
     "nishant-cli": "./bin/nishant-cli.js"
-  },
+  }, 
+  "publishConfig": 
+  {
+    "registry":"https://npm.pkg.github.com/@nishant-wavhal"
+   },
   "type": "module",
   "version": "1.0.0",
   "description": "",
   "main": "./bin/nishant-cli.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node bin/nishant-cli.js"
+    "start": "node bin/nishant-cli.js",
+    "dev": "nodemon -L ./bin/nishant-cli.js"
   },
   "author": "Nishant Wavhal",
   "license": "MIT",
   "dependencies": {
     "chalk": "^5.3.0",
     "commander": "^12.1.0",
-    "figlet": "^1.7.0",
-    "inquirer": "^9.2.14",
-    "ora": "^8.0.1"
+    "nodemon": "^3.1.7"
+
   }
 }

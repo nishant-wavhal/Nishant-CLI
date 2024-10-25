@@ -20,10 +20,14 @@ RUN set -x && \
   npm install -g prettier@${PRETTIER_VERSION} && \
   npm cache clean --force
 
-  WORKDIR /usr/src/app
+  
+
+  RUN mkdir -p /app
+  WORKDIR /app
   COPY ["package.json", "package-lock.json*", "npm-shrinkwrap.json*", "./"]
   RUN npm install --production --silent && mv node_modules ../
   COPY . .
-  EXPOSE 3000
-  COPY --chown==node:node . .
+  EXPOSE 8080
+  COPY --chmod==node:node . . 
+  ENTRYPOINT ["node", "bin/nishant-cli.js"]
   CMD ["npm", "start"]
