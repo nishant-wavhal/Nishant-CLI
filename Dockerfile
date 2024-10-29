@@ -1,33 +1,31 @@
-FROM salesforce/cli:latest-full
-
-
-ENV SHELL /bin/bash
-ENV DEBIAN_FRONTEND=noninteractive
-ENV SFDX_CONTAINER_MODE true
-ENV NODE_ENV production
-
-ARG PRETTIER_VERSION 3.3.3
+FROM salesforce/cli:latest-full AS base
 
 # Basic
 RUN apt update
-RUN echo y | apt install software-properties-common
-
-# Install prettier
-RUN set -x && \
-  (curl -sL https://deb.nodesource.com/setup_20.x | bash) && \
-  apt-get install --no-install-recommends nodejs && \
-  rm -rf /var/lib/apt/lists/* && \
-  npm install -g prettier@${PRETTIER_VERSION} && \
-  npm cache clean --force
-
-  
-
-  RUN mkdir -p /app
-  WORKDIR /app
-  COPY ["package.json", "package-lock.json*", "npm-shrinkwrap.json*", "./"]
-  RUN npm install --production --silent && mv node_modules ../
-  COPY . .
-  EXPOSE 8080
-  COPY --chmod==node:node . . 
-  ENTRYPOINT ["node", "bin/nishant-cli.js"]
-  CMD ["npm", "start"]
+RUN echo y | apt install software-properties-common 
+ 
+FROM base AS deps
+ 
+RUN corepack enable
+WORKDIR /app
+COPY package.json pnpm-lock.yaml ./
+RUN --mount=type=cache,id=pnpm,target=/root/.local/share/pnpm/store pnpm fetch --frozen-lockfile
+RUN --mount=type=cache,id=pnpm,target=/root/.local/share/pnpm/store pnpm install --frozen-lockfile --prod
+ 
+FROM base AS build
+ 
+RUN corepack enable
+WORKDIR /app
+COPY package.json pnpm-lock.yaml ./
+RUN --mount=type=cache,id=pnpm,target=/root/.local/share/pnpm/store pnpm fetch --frozen-lockfile
+RUN --mount=type=cache,id=pnpm,target=/root/.local/share/pnpm/store pnpm install --frozen-lockfile
+COPY . .
+RUN pnpm build
+ 
+FROM base
+ 
+WORKDIR /app
+COPY --from=deps /app/node_modules /app/node_modules
+COPY --from=build /app/dist /app/dist
+ENV NODE_ENV production
+ENTRYPOINT ["node", "bin/nishant-cli.js"]
